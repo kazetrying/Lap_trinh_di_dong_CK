@@ -18,7 +18,8 @@ class CardRepository(private val dao: CardDao) {
 
     fun getCardCount(deckId: Long): Flow<Int> = dao.getCardCount(deckId)
 
-    fun getDueCardCount(deckId: Long): Flow<Int> = dao.getDueCardCount(deckId)
+    // ✅ Cập nhật: Truyền thêm thời gian hiện tại
+    fun getDueCardCount(deckId: Long): Flow<Int> = dao.getDueCardCount(deckId, System.currentTimeMillis())
 
     suspend fun insertCard(card: Card) = dao.insertCard(card)
 
@@ -26,5 +27,6 @@ class CardRepository(private val dao: CardDao) {
 
     suspend fun deleteCard(card: Card) = dao.deleteCard(card)
 
-    suspend fun getDueCards(deckId: Long): List<Card> = dao.getDueCards(deckId)
+    // ✅ Cập nhật: Truyền thêm thời gian hiện tại
+    suspend fun getDueCards(deckId: Long): List<Card> = dao.getDueCards(deckId, System.currentTimeMillis())
 }
