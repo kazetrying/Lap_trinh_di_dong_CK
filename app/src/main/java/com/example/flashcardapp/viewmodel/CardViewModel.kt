@@ -36,8 +36,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                 .catch { e -> Log.e(TAG, "observeDecks error: ${e.message}") }
                 .collect { cloudDecks ->
                     try {
-                        dao.clearAllDecks()
                         cloudDecks.forEach { dao.insertDeck(it) }
+                        val localDecks = dao.getAllDecksOnce()
+                        val cloudIds = cloudDecks.map { it.id }.toSet()
+                        localDecks.filter { it.id !in cloudIds }.forEach { dao.deleteDeck(it) }
                     } catch (e: Exception) {
                         Log.e(TAG, "Auto-sync decks failed: ${e.message}")
                     }
@@ -48,9 +50,10 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
                 .catch { e -> Log.e(TAG, "observeCards error: ${e.message}") }
                 .collect { cloudCards ->
                     try {
-                        dao.clearAllCards()
                         cloudCards.forEach { dao.insertCard(it) }
-                        _currentDeckId?.let { loadDueCards(it) }
+                        val localCards = dao.getAllCardsOnce()
+                        val cloudIds = cloudCards.map { it.id }.toSet()
+                        localCards.filter { it.id !in cloudIds }.forEach { dao.deleteCard(it) }
                     } catch (e: Exception) {
                         Log.e(TAG, "Auto-sync cards failed: ${e.message}")
                     }
@@ -80,7 +83,8 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getCardCount(deckId: Long): Flow<Int>    = repo.getCardCount(deckId)
-    fun getDueCardCount(deckId: Long): Flow<Int> = repo.getDueCardCount(deckId)
+    fun getDueCardCount(deckId: Long): Flow<Int> = dao.getDueCardCount(deckId, System.currentTimeMillis())
+    
     fun getCardsByDeck(deckId: Long): Flow<List<Card>> = repo.getCardsByDeck(deckId)
 
     fun addCard(deckId: Long, front: String, back: String) {
@@ -127,18 +131,16 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // ✅ FIX: Xóa sạch Cloud trước khi đẩy dữ liệu máy lên để dọn dẹp "thẻ mồ côi"
     fun pushAllToCloud() {
         viewModelScope.launch {
             _syncStatus.value = SyncStatus.Syncing
             try {
-                rtRepo.clearCloudData() // Xóa sạch rác trên Firebase
+                rtRepo.clearCloudData()
                 val decks = dao.getAllDecksOnce()
                 val cards = dao.getAllCardsOnce()
                 decks.forEach { rtRepo.syncDeckToCloud(it) }
                 cards.forEach { rtRepo.syncCardToCloud(it) }
                 _syncStatus.value = SyncStatus.Success
-                Log.d(TAG, "pushAllToCloud: Đã dọn rác và đẩy dữ liệu mới thành công")
             } catch (e: Exception) {
                 _syncStatus.value = SyncStatus.Error(e.message ?: "Lỗi")
             }
@@ -159,7 +161,7 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
     fun loadDueCards(deckId: Long) {
         _currentDeckId = deckId
         viewModelScope.launch {
-            val cards = repo.getDueCards(deckId)
+            val cards = dao.getDueCards(deckId, System.currentTimeMillis())
             _dueCards.value      = cards
             _currentIndex.value  = 0
             _studyFinished.value = cards.isEmpty()
@@ -170,21 +172,18 @@ class CardViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val card    = currentCard.value ?: return@launch
             val updated = applySmTwo(card, quality)
+            
             repo.updateCard(updated)
             rtRepo.syncCardToCloud(updated)
 
-            if (quality < 3) {
-                val currentList = _dueCards.value.toMutableList()
-                currentList.removeAt(_currentIndex.value)
-                currentList.add(updated)
-                _dueCards.value = currentList
+            // ✅ CHỈ LUÔN TĂNG INDEX ĐỂ CHUYỂN THẺ TIẾP THEO
+            // Không nối thêm vào cuối danh sách nữa theo ý bạn.
+            // Thẻ "Quên" sẽ có nextReviewDate là 1 phút sau, nó sẽ xuất hiện lại khi bạn học xong bộ này và vào học lại lần sau.
+            val nextIndex = _currentIndex.value + 1
+            if (nextIndex < _dueCards.value.size) {
+                _currentIndex.value = nextIndex
             } else {
-                val nextIndex = _currentIndex.value + 1
-                if (nextIndex < _dueCards.value.size) {
-                    _currentIndex.value = nextIndex
-                } else {
-                    _studyFinished.value = true
-                }
+                _studyFinished.value = true
             }
         }
     }

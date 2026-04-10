@@ -62,9 +62,7 @@ fun HomeScreen(
                     deckCount       = decks.size,
                     syncStatus      = syncStatus,
                     onSettingsClick = onSettingsClick,
-                    onLogout        = onLogout,
-                    onSync          = { viewModel.pullFromCloud() },
-                    onPush          = { viewModel.pushAllToCloud() }
+                    onLogout        = onLogout
                 )
             }
 
@@ -159,13 +157,10 @@ fun HomeHeader(
     deckCount: Int,
     syncStatus: SyncStatus,
     onSettingsClick: () -> Unit,
-    onLogout: () -> Unit,
-    onSync: () -> Unit,
-    onPush: () -> Unit
+    onLogout: () -> Unit
 ) {
     val currentUser = FirebaseAuth.getInstance().currentUser
     val email = currentUser?.email ?: ""
-    val isSyncing = syncStatus is SyncStatus.Syncing
 
     Box(
         modifier = Modifier
@@ -185,34 +180,6 @@ fun HomeHeader(
             modifier = Modifier.align(Alignment.TopEnd),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ✅ Nút đẩy dữ liệu local lên cloud
-            IconButton(
-                onClick = onPush,
-                enabled = !isSyncing,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White.copy(alpha = 0.2f))
-            ) {
-                Icon(
-                    Icons.Default.CloudUpload,
-                    contentDescription = "Đẩy lên cloud",
-                    tint = Color.White
-                )
-            }
-            // ✅ Nút kéo dữ liệu từ cloud về
-            IconButton(
-                onClick = onSync,
-                enabled = !isSyncing,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White.copy(alpha = 0.2f))
-            ) {
-                Icon(
-                    Icons.Default.CloudDownload,
-                    contentDescription = "Kéo từ cloud",
-                    tint = Color.White
-                )
-            }
             IconButton(
                 onClick = onLogout,
                 modifier = Modifier

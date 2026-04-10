@@ -2,6 +2,7 @@ package com.example.flashcardapp.util
 
 import android.content.Context
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import java.util.Locale
 
 class TtsHelper(context: Context) {
@@ -10,39 +11,44 @@ class TtsHelper(context: Context) {
     private var isReady = false
     private var pendingText: String? = null
 
-    // ← Dùng applicationContext thay vì context trực tiếp
-    private val appContext = context.applicationContext
-
     init {
-        initTts()
-    }
-
-    private fun initTts() {
-        tts = TextToSpeech(appContext) { status ->
-            android.util.Log.d("TTS", "onInit called, status=$status")
+        tts = TextToSpeech(context.applicationContext) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                tts?.language = Locale.forLanguageTag("vi-VN")
-                android.util.Log.d("TTS", "Init OK")
-                isReady = true
-                pendingText?.let {
-                    tts?.speak(it, TextToSpeech.QUEUE_FLUSH, null, "tts_1")
+                // Kiểm tra xem máy có hỗ trợ tiếng Anh không (ưu tiên vì bạn học tiếng Anh)
+                val result = tts?.setLanguage(Locale.US)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    tts?.language = Locale.getDefault()
                 }
+                isReady = true
+                Log.d("TTS", "TTS Initialized successfully")
+                pendingText?.let { speak(it) }
                 pendingText = null
             } else {
-                android.util.Log.e("TTS", "Init FAILED status=$status")
+                Log.e("TTS", "TTS Initialization failed")
             }
         }
     }
 
     fun speak(text: String) {
-        android.util.Log.d("TTS", "speak() isReady=$isReady text=$text")
         if (!isReady) {
             pendingText = text
             return
         }
+        
         if (text.isNotBlank()) {
+            // ✅ TỰ ĐỘNG CHỌN NGÔN NGỮ: 
+            // Nếu text không chứa dấu tiếng Việt thì dùng tiếng Anh, ngược lại dùng tiếng Việt
+            val hasVietnameseSigns = text.any { it in "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ" }
+            if (hasVietnameseSigns) {
+                tts?.language = Locale("vi", "VN")
+            } else {
+                tts?.language = Locale.US
+            }
+
             tts?.stop()
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_1")
+            // Tăng âm lượng và tốc độ đọc một chút cho rõ
+            tts?.setSpeechRate(0.9f) 
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_id")
         }
     }
 
@@ -53,7 +59,5 @@ class TtsHelper(context: Context) {
     fun shutdown() {
         tts?.stop()
         tts?.shutdown()
-        tts = null
-        isReady = false
     }
 }
