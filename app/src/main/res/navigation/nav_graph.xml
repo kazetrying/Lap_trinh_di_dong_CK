@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.yourname.flashlearn.presentation.home.HomeFragment"
+        android:label="FlashLearn" >
+        <action
+            android:id="@+id/action_home_to_deckDetail"
+            app:destination="@id/deckDetailFragment" />
+        <action
+            android:id="@+id/action_home_to_study"
+            app:destination="@id/studyFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deckDetailFragment"
+        android:name="com.yourname.flashlearn.presentation.deck.DeckDetailFragment"
+        android:label="Deck Detail">
+        <argument
+            android:name="deckId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_deckDetail_to_study"
+            app:destination="@id/studyFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/studyFragment"
+        android:name="com.yourname.flashlearn.presentation.study.StudyFragment"
+        android:label="Study">
+        <argument
+            android:name="deckId"
+            app:argType="long" />
+    </fragment>
+
+</navigation>
