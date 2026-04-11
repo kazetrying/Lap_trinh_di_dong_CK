@@ -2,18 +2,19 @@ package com.example.flashcardapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Primary = Color(0xFF6C63FF)
-val PrimaryDark = Color(0xFF4B44CC)
-val PrimaryLight = Color(0xFFEEEDFF)
-val Secondary = Color(0xFF03DAC6)
-val Background = Color(0xFFF8F9FF)
+// Bảng màu xanh rực rỡ và chuyên nghiệp
+val Primary = Color(0xFF2196F3) // Blue 500
+val PrimaryDark = Color(0xFF1976D2) // Blue 700
+val PrimaryLight = Color(0xFFBBDEFB) // Blue 100
+val Secondary = Color(0xFF00BCD4) // Cyan 500
+val Background = Color(0xFFF5F7FA)
 val Surface = Color(0xFFFFFFFF)
-val SurfaceVariant = Color(0xFFF3F4FF)
+val SurfaceVariant = Color(0xFFE3F2FD)
 
-val PrimaryDarkTheme = Color(0xFF9D97FF)
-val BackgroundDark = Color(0xFF12121F)
-val SurfaceDark = Color(0xFF1E1E2E)
-val SurfaceVariantDark = Color(0xFF2A2A3E)
+val PrimaryDarkTheme = Color(0xFF90CAF9)
+val BackgroundDark = Color(0xFF121212)
+val SurfaceDark = Color(0xFF1E1E1E)
+val SurfaceVariantDark = Color(0xFF2C2C2C)
 
 val ColorForgot = Color(0xFFFF5252)
 val ColorHard = Color(0xFFFFAB40)
